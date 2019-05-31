@@ -14,6 +14,10 @@ Add the project id and api key for Satismeter in `tap_satismeter/config.json`
 pip install -e .
 ```
 
+```
+cd tap_satismeter
+```
+
 ```bash
 python __init__.py -c ../config.json --discover > catalog.json
 ```
