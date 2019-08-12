@@ -6,14 +6,14 @@ from typing import List
 
 import arrow
 import requests
-import singer
 from requests.auth import HTTPBasicAuth
-from singer import metadata, utils
-from singer.catalog import Catalog
 from tenacity import retry, stop_after_attempt, wait_fixed
+from singer import (get_logger, metadata, utils, write_record, write_schema,
+                    write_state)
+from singer.catalog import Catalog
 
 REQUIRED_CONFIG_KEYS = ["project_id", "api_key", "start_date"]
-LOGGER = singer.get_logger()
+LOGGER = get_logger()
 SESSION = requests.Session()
 
 SATISMETER_URL = "https://app.satismeter.com/api/responses"
@@ -50,8 +50,7 @@ def get_abs_path(path):
 
 # Load schemas from schemas folder
 def load_schemas():
-    schemas = {}
-
+    """ read all json files in the schemas folder. """
     for filename in os.listdir(get_abs_path('schemas')):
         path = get_abs_path('schemas') + '/' + filename
         if path.endswith('.json'):
@@ -61,6 +60,7 @@ def load_schemas():
 
 
 def get_key_properties(schema_name: str) -> List[str]:
+    """ return for each schema which fields are mandatory included. """
     if schema_name == 'response':
         return ['id', 'created', 'rating', 'category', 'score', 'feedback']
     return []
@@ -71,20 +71,16 @@ def discover():
 
     for schema_name, schema in load_schemas():
 
-        # TODO: populate any metadata and stream's key properties here..
-        md = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
-            key_properties=get_key_properties(schema_name)
-        )
-        # md = []
+        meta_data = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
+                                                   key_properties=get_key_properties(schema_name))
         # stream_metadata = [{'breadcrumb': 'selected', 'metadata': True}]
-        stream_key_properties = []
 
         # create and add catalog entry
         catalog_entry = {
             'stream': schema_name,
             'tap_stream_id': schema_name,
             'schema': schema,
-            'metadata': md,
+            'metadata': meta_data,
             'key_properties': []
         }
         streams.append(catalog_entry)
@@ -109,6 +105,7 @@ def discover():
 #     return selected_streams
 
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
+    """ sync performs querying of the api and outputting results. """
     # selected_stream_ids = get_selected_streams(catalog)
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
 
@@ -116,53 +113,55 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
     for stream in catalog.streams:
         stream_id = stream.tap_stream_id
         if stream_id in selected_stream_ids:
-            LOGGER.info(f'Syncing stream: {stream_id}')
-            singer.write_schema(stream_id, stream.schema.to_dict(), 'id')
+            LOGGER.info('Syncing stream: %s', stream_id)
+            write_schema(stream_id, stream.schema.to_dict(), 'id')
 
             while True:
                 # TODO: use end_date in state or use bookmark? How do they relate
                 # if 'bookmarks' in state:  # Use bookmark as starting point
                     # startDateTime = arrow.get(state['bookmarks'][stream_id]['last_record'])
-                if 'end_date' in state:  # Start where the previous run left off. TODO: is this necessary to keep in state? Isn't it either bookmark or state?
-                    startDateTime = arrow.get(state['end_date'])
+                if 'end_date' in state:  # Start where the previous run left off.
+                    start_datetime = arrow.get(state['end_date'])
                 else:  # This case indicates a first-ever run
-                    startDateTime = arrow.get(config['start_date'])
+                    start_datetime = arrow.get(config['start_date'])
 
                 # request a month of data from the api
-                endDateTime = startDateTime.shift(days=30)
+                end_datetime = start_datetime.shift(days=30)
 
                 # Fetch data from api
                 params = {
                     "format": "json",
                     "project": config["project_id"],
-                    "startDate": startDateTime.isoformat(),
-                    "endDate": endDateTime.isoformat(),
+                    "startDate": start_datetime.isoformat(),
+                    "endDate": end_datetime.isoformat(),
                 }
 
-                res = request(SATISMETER_URL, params=params, auth=HTTPBasicAuth(config["api_key"], None), user_agent=config.get('user_agent'))
+                res = request(SATISMETER_URL, params=params,
+                              auth=HTTPBasicAuth(config["api_key"], None),
+                              user_agent=config.get('user_agent'))
 
                 # Output items
-                # bookmark = startDateTime
+                # bookmark = start_datetime
                 for response in res.json()['responses']:
-                    singer.write_record(stream_id, response)
+                    write_record(stream_id, response)
                     # bookmark = max([arrow.get(response['created']), bookmark])
 
                 # Update and export state
                 state.update({
-                    'start_date': startDateTime.isoformat(),
-                    'end_date': endDateTime.isoformat()
+                    'start_date': start_datetime.isoformat(),
+                    'end_date': end_datetime.isoformat()
                 })
 
                 # utils.update_state(state, stream_id, bookmark.datetime)
                 # if 'bookmarks' not in state:
                 #     state['bookmarks'] = {}
                 # state['bookmarks'][stream_id] = {'last_record': bookmark.isoformat()}
-                singer.write_state(state)
+                write_state(state)
 
-                if endDateTime > arrow.utcnow():
+                if end_datetime > arrow.utcnow():
                     break
-        LOGGER.info(f'Finished syncing stream: {stream_id}')
-    return
+
+        LOGGER.info('Finished syncing stream: %s', stream_id)
 
 
 @utils.handle_top_exception(LOGGER)
@@ -179,7 +178,7 @@ def main():
         if args.catalog:
             catalog = args.catalog
         else:
-            catalog =  discover()
+            catalog = discover()
 
         sync(args.config, args.state, catalog)
 
