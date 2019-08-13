@@ -23,7 +23,7 @@ There are no rate limits enforced on the side of Satismeter api, but the tap has
 
 ## tap-satismeter Table Schemas
 
-- Table name: responses
+- Table name: response
 - Description: all of the user responses
 - Primary key column(s): id
 - Replicated fully or incrementally _(uses a bookmark to maintain state)_: incrementally, based on the `created` field
