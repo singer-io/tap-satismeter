@@ -17,15 +17,20 @@ REQUIRED_CONFIG_KEYS = ["project_id", "api_key"]
 LOGGER = get_logger()
 SESSION = requests.Session()
 
-SATISMETER_URL = "https://app.satismeter.com/api/responses"
+SATISMETER_BASE_URL = "https://app.satismeter.com/api"
+# SATISMETER_URL = "https://app.satismeter.com/api/v2/response-statistics"
 
 
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(1), reraise=True)
 @utils.ratelimit(1, 5)
-def request(url: str, params: dict = None, auth=None, user_agent: str = None):
+def request(path: str, params: dict = None, auth=None,
+            user_agent: str = None, extra_headers: dict = None):
+    url = SATISMETER_BASE_URL + path
 
     params = params or {}
     headers = {}
+
+    headers.update(extra_headers)
 
     if user_agent is not None:
         headers["User-Agent"] = user_agent
@@ -60,8 +65,10 @@ def load_schemas():
 
 def get_key_properties(schema_name: str) -> List[str]:
     """ return for each schema which fields are mandatory included. """
-    if schema_name == 'response':
+    if schema_name == 'responses':
         return ['id', 'created', 'rating', 'category', 'score', 'feedback']
+    if schema_name == 'response-statistics':
+        return []
     return []
 
 
@@ -86,6 +93,117 @@ def discover():
     return {'streams': streams}
 
 
+def output_responses(stream_id, config: dict, state: dict) -> dict:
+    """ Query and output the api for individual responses """
+
+    while True:
+        previous_state_end_datetime = state.get(
+            'bookmarks', {}).get(stream_id, {}).get('last_record', None)
+
+        # Start where the previous run left off or it's a first run.
+        start_datetime = arrow.get(
+            previous_state_end_datetime or '2015-01-01')
+
+        # request data from the api in blocks of a month
+        end_datetime = start_datetime.shift(months=1)
+
+        # Fetch data from api
+        params = {
+            "format": "json",
+            "project": config["project_id"],
+            "startDate": start_datetime.isoformat(),
+            "endDate": end_datetime.isoformat(),
+        }
+
+        res_json = request(
+            '/responses/', params=params,
+            auth=HTTPBasicAuth(config["api_key"], None),
+            user_agent=config.get('user_agent', None)
+        ).json()
+
+        # Output items
+        bookmark = start_datetime
+        with record_counter(endpoint=stream_id) as counter:
+            for record in res_json['responses']:
+                write_record(stream_id, record)
+                counter.increment()
+                bookmark = max([arrow.get(record['created']), bookmark])
+
+        # If we're not past the current timestamp, set the bookmark
+        # to the end_datetime requested as there won't be any new ones
+        # coming in for past times.
+        if end_datetime < arrow.utcnow():
+            bookmark = end_datetime
+
+        # Update and export state
+        if 'bookmarks' not in state:
+            state['bookmarks'] = {}
+        state['bookmarks'][stream_id] = {'last_record': bookmark.isoformat()}
+
+        write_state(state)
+
+        # Stop when we had requested past the current timestamp,
+        # there won't be anything more.
+        if end_datetime > arrow.utcnow():
+            break
+
+    return state
+
+
+def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
+    """ Query and output the api for aggregated response statistics per month """
+
+    while True:
+        previous_state_end_datetime = state.get(
+            'bookmarks', {}).get(stream_id, {}).get('last_month', None)
+
+        # Start where the previous run left off or it's a first run.
+        start_datetime = arrow.get(
+            previous_state_end_datetime or '2019-01-01').floor('month')
+
+        # request data from the api per month
+        end_datetime = start_datetime.shift(months=1)
+
+        # Fetch data from api
+        params = {
+            "format": "json",
+            "project": config["project_id"],
+            "startDate": start_datetime.isoformat(),
+            "endDate": end_datetime.isoformat(),
+        }
+
+        res_json = request(
+            '/v2/response-statistics', params=params,
+            extra_headers={'AuthKey': config["api_key"]},
+            user_agent=config.get('user_agent', None)
+        ).json()
+
+        # Output items
+        record = res_json['data'][0]['attributes']
+        record['month'] = start_datetime.isoformat()
+
+        write_record(stream_id, record)
+
+        bookmark = end_datetime
+        if start_datetime == arrow.utcnow().floor('month'):
+            bookmark = start_datetime
+
+        # Update and export state
+        if 'bookmarks' not in state:
+            state['bookmarks'] = {}
+        state['bookmarks'][stream_id] = {'last_month': bookmark.isoformat()}
+
+        write_state(state)
+
+        # Stop when we had requested the current month, the next
+        # month won't contain any data.
+        if start_datetime == arrow.utcnow().floor('month'):
+            break
+
+    return state
+
+
+
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
@@ -97,57 +215,12 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
             LOGGER.info('Syncing stream: %s', stream_id)
             write_schema(stream_id, stream.schema.to_dict(), 'id')
 
-            while True:
-                previous_state_end_datetime = state.get(
-                    'bookmarks', {}).get(stream_id, {}).get('last_record', None)
-
-                if previous_state_end_datetime is not None: # Start where the previous run left off.
-                    start_datetime = arrow.get(previous_state_end_datetime)
-                else:  # This case indicates a first-ever run
-                    start_datetime = arrow.get('2015-01-01')
-
-                # request data from the api in blocks of 30 days
-                end_datetime = start_datetime.shift(days=30)
-
-                # Fetch data from api
-                params = {
-                    "format": "json",
-                    "project": config["project_id"],
-                    "startDate": start_datetime.isoformat(),
-                    "endDate": end_datetime.isoformat(),
-                }
-
-                res_json = request(
-                    SATISMETER_URL, params=params,
-                    auth=HTTPBasicAuth(config["api_key"], None),
-                    user_agent=config.get('user_agent', None)
-                ).json()
-
-                # Output items
-                bookmark = start_datetime
-                with record_counter(endpoint=stream_id) as counter:
-                    for response in res_json['responses']:
-                        write_record(stream_id, response)
-                        counter.increment()
-                        bookmark = max([arrow.get(response['created']), bookmark])
-
-                # If we're not past the current timestamp, set the bookmark
-                # to the end_datetime requested as there won't be any new ones
-                # coming in for past times.
-                if end_datetime < arrow.utcnow():
-                    bookmark = end_datetime
-
-                # Update and export state
-                if 'bookmarks' not in state:
-                    state['bookmarks'] = {}
-                state['bookmarks'][stream_id] = {'last_record': bookmark.isoformat()}
-
-                write_state(state)
-
-                # Stop when we had requested past the current timestamp,
-                # there won't be anything more.
-                if end_datetime > arrow.utcnow():
-                    break
+            if stream_id == 'responses':
+                state = output_responses(stream_id, config, state)
+            elif stream_id == 'response-statistics':
+                state = output_response_statistics(stream_id, config, state)
+            else:
+                LOGGER.error("No handler for stream_id: %s", stream_id)
 
         LOGGER.info('Finished syncing stream: %s', stream_id)
 

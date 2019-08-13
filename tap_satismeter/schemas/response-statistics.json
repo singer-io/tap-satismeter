@@ -1,0 +1,43 @@
+{
+	"type": ["null", "object"],
+	"additionalProperties": false,
+	"properties": {
+        "month": {
+			"type": ["null", "string"],
+			"format": "date-time"
+        },
+		"responses": {
+			"type": ["null", "integer"]
+        },
+		"displays": {
+			"type": ["null", "integer"]
+        },
+		"dismissed": {
+			"type": ["null", "integer"]
+        },
+		"pending": {
+			"type": ["null", "integer"]
+        },
+		"commented": {
+			"type": ["null", "integer"]
+        },
+		"promoters": {
+			"type": ["null", "integer"]
+        },
+		"passives": {
+			"type": ["null", "integer"]
+        },
+        "detractors": {
+            "type": ["null", "integer"]
+        },
+        "nps": {
+            "type": ["null", "number"]
+        },
+		"frequency": {
+            "type": ["null", "array"],
+            "items": {
+                "type": "integer"
+            }
+        }
+	}
+}

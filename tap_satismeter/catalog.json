@@ -1,8 +1,200 @@
 {
   "streams": [
     {
-      "stream": "response",
-      "tap_stream_id": "response",
+      "stream": "response-statistics",
+      "tap_stream_id": "response-statistics",
+      "schema": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "month": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "responses": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "displays": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "dismissed": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "pending": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "commented": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "promoters": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "passives": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "detractors": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "nps": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "frequency": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "inclusion": "available",
+            "schema-name": "response-statistics"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "month"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "responses"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "displays"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "dismissed"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "pending"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "commented"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "promoters"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "passives"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "detractors"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "nps"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "frequency"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        }
+      ],
+      "key_properties": []
+    },
+    {
+      "stream": "responses",
+      "tap_stream_id": "responses",
       "schema": {
         "type": [
           "null",
@@ -267,7 +459,7 @@
               "feedback"
             ],
             "inclusion": "available",
-            "schema-name": "response"
+            "schema-name": "responses"
           }
         },
         {
