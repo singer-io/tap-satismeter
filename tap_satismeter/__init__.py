@@ -18,7 +18,6 @@ LOGGER = get_logger()
 SESSION = requests.Session()
 
 SATISMETER_BASE_URL = "https://app.satismeter.com/api"
-# SATISMETER_URL = "https://app.satismeter.com/api/v2/response-statistics"
 
 
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(1), reraise=True)
@@ -30,7 +29,8 @@ def request(path: str, params: dict = None, auth=None,
     params = params or {}
     headers = {}
 
-    headers.update(extra_headers)
+    if extra_headers:
+        headers.update(extra_headers)
 
     if user_agent is not None:
         headers["User-Agent"] = user_agent
@@ -68,7 +68,8 @@ def get_key_properties(schema_name: str) -> List[str]:
     if schema_name == 'responses':
         return ['id', 'created', 'rating', 'category', 'score', 'feedback']
     if schema_name == 'response-statistics':
-        return []
+        return ['month', 'nps', 'responses', 'displays', 'dismissed', 'pending',
+                'commented', 'promoters', 'passives', 'detractors', 'frequency']
     return []
 
 
@@ -86,7 +87,7 @@ def discover():
             'tap_stream_id': schema_name,
             'schema': schema,
             'metadata': meta_data,
-            'key_properties': []
+            'key_properties': get_key_properties(schema_name),
         }
         streams.append(catalog_entry)
 
@@ -174,7 +175,7 @@ def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
 
         res_json = request(
             '/v2/response-statistics', params=params,
-            extra_headers={'AuthKey': config["api_key"]},
+            auth=HTTPBasicAuth(config["api_key"], None),
             user_agent=config.get('user_agent', None)
         ).json()
 
