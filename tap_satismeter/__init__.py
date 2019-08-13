@@ -21,7 +21,7 @@ SATISMETER_URL = "https://app.satismeter.com/api/responses"
 
 
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(1), reraise=True)
-@utils.ratelimit(1, 1)
+@utils.ratelimit(1, 5)
 def request(url: str, params: dict = None, auth=None, user_agent: str = None):
 
     params = params or {}
@@ -34,7 +34,7 @@ def request(url: str, params: dict = None, auth=None, user_agent: str = None):
     LOGGER.info("GET %s", req.url)
 
     with http_request_timer(url):
-        resp = SESSION.send(req)
+        resp = SESSION.send(req, timeout=(3, 30))
 
     if resp.status_code >= 400:
         LOGGER.error("GET %s [%s - %s]", req.url, resp.status_code, resp.content)
