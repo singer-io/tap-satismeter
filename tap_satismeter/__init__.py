@@ -98,7 +98,8 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
             write_schema(stream_id, stream.schema.to_dict(), 'id')
 
             while True:
-                previous_state_end_datetime = state.get('bookmarks', {}).get(stream_id, {}).get('last_record', None)
+                previous_state_end_datetime = state.get(
+                    'bookmarks', {}).get(stream_id, {}).get('last_record', None)
 
                 if previous_state_end_datetime is not None: # Start where the previous run left off.
                     start_datetime = arrow.get(previous_state_end_datetime)
@@ -129,13 +130,12 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
                         write_record(stream_id, response)
                         counter.increment()
                         bookmark = max([arrow.get(response['created']), bookmark])
-                
-                    # If no responses were returned and the end_datetime requested is not past the current timestamp,
-                    # it means we can move the bookmark to the end_datetime to request the following period.
-                    # If the end_datetime is past the current timestamp, it means there are still responses that can
-                    # come in; don't update the bookmark, the loop will exit at the end due to the if-break condition
-                    if counter.value == 0 and end_datetime < arrow.utcnow():
-                        bookmark = end_datetime
+
+                # If we're not past the current timestamp, set the bookmark
+                # to the end_datetime requested as there won't be any new ones
+                # coming in for past times.
+                if end_datetime < arrow.utcnow():
+                    bookmark = end_datetime
 
                 # Update and export state
                 if 'bookmarks' not in state:
