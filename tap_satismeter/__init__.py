@@ -209,7 +209,7 @@ def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
-    selected_stream_ids = ['response-statistics', ]
+    selected_stream_ids = ['responses', ]
 
     # Loop over streams in catalog
     for stream in catalog.streams:

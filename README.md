@@ -36,7 +36,7 @@ There are no rate limits enforced on the side of Satismeter api, but the tap has
 2. Response statistics
     - Table name: response-statistics
     - Description: aggregated response statistics per month
-    - Primary key column(s): month
+    - Primary key column(s): id (which equals the value of the month)
     - Replicated fully or incrementally _(uses a bookmark to maintain state)_: incrementally, based on the `month` field
     - Bookmark column(s): _(if replicated incrementally)_ : month
     - Link to API endpoint documentation: [Satismeter Response statistics API](https://help.satismeter.com/en/articles/93675-response-statistics-api)
