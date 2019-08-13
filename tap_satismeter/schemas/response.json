@@ -23,6 +23,12 @@
 		"rating": {
 			"type": ["null", "integer"]
         },
+		"answers": {
+            "type": ["null", "array"],
+            "items": {
+                "type": "string"
+            }
+        },
 		"feedback": {
 			"type": ["null", "string"]
         },
@@ -47,6 +53,9 @@
                     "type": ["null", "string"]
                 },
                 "region": {
+                    "type": ["null", "string"]
+                },
+                "regionName": {
                     "type": ["null", "string"]
                 },
                 "city": {
@@ -109,6 +118,10 @@
                             "format": "date-time"
                         }
                     }
+                },
+                "groups": {
+                    "type": ["null", "object"],
+                    "additionalProperties": false
                 }
             }
         },

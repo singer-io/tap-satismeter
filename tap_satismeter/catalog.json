@@ -1,0 +1,421 @@
+{
+  "streams": [
+    {
+      "stream": "response",
+      "tap_stream_id": "response",
+      "schema": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "project": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "campaign": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "device": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "os": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "type": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          },
+          "rating": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "answers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "feedback": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dismissed": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "pending": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "created": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "location": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "country": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "countryName": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "region": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "regionName": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "city": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "short": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "long": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          },
+          "referrer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "user": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "deleted": {
+                "type": [
+                  "null",
+                  "boolean"
+                ]
+              },
+              "userId": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "name": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "email": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "createdAt": {
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "format": "date-time"
+              },
+              "traits": {
+                "type": [
+                  "null",
+                  "object"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "name": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "createdAt": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "format": "date-time"
+                  },
+                  "signUpDate": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "format": "date-time"
+                  }
+                }
+              },
+              "groups": {
+                "type": [
+                  "null",
+                  "object"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "category": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "score": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          }
+        }
+      },
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "table-key-properties": [
+              "id",
+              "created",
+              "rating",
+              "category",
+              "score",
+              "feedback"
+            ],
+            "inclusion": "available",
+            "schema-name": "response"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "project"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "campaign"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "device"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "rating"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "answers"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "feedback"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "dismissed"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "pending"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "created"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "location"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "referrer"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "method"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "user"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "id"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "category"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "score"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        }
+      ],
+      "key_properties": []
+    }
+  ]
+}
