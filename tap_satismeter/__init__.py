@@ -11,8 +11,9 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from singer import (get_logger, metadata, utils, write_record, write_schema,
                     write_state)
 from singer.catalog import Catalog
+from singer.metrics import record_counter, http_request_timer
 
-REQUIRED_CONFIG_KEYS = ["project_id", "api_key", "start_date"]
+REQUIRED_CONFIG_KEYS = ["project_id", "api_key"]
 LOGGER = get_logger()
 SESSION = requests.Session()
 
@@ -20,7 +21,7 @@ SATISMETER_URL = "https://app.satismeter.com/api/responses"
 
 
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(1), reraise=True)
-@utils.ratelimit(10, 1)
+@utils.ratelimit(1, 1)
 def request(url: str, params: dict = None, auth=None, user_agent: str = None):
 
     params = params or {}
@@ -32,10 +33,8 @@ def request(url: str, params: dict = None, auth=None, user_agent: str = None):
     req = requests.Request("GET", url, params=params, headers=headers, auth=auth).prepare()
     LOGGER.info("GET %s", req.url)
 
-    # with singer.stats.Timer(source=parse_source_from_url(url)) as stats:
-    #     resp = SESSION.send(req)
-    #     stats.http_status_code = resp.status_code
-    resp = SESSION.send(req)
+    with http_request_timer(url):
+        resp = SESSION.send(req)
 
     if resp.status_code >= 400:
         LOGGER.error("GET %s [%s - %s]", req.url, resp.status_code, resp.content)
@@ -73,7 +72,6 @@ def discover():
 
         meta_data = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
                                                    key_properties=get_key_properties(schema_name))
-        # stream_metadata = [{'breadcrumb': 'selected', 'metadata': True}]
 
         # create and add catalog entry
         catalog_entry = {
@@ -88,25 +86,8 @@ def discover():
     return {'streams': streams}
 
 
-# def get_selected_streams(catalog):
-#     '''
-#     Gets selected streams.  Checks schema's 'selected' first (legacy)
-#     and then checks metadata (current), looking for an empty breadcrumb
-#     and mdata with a 'selected' entry
-#     '''
-#     selected_streams = []
-#     import ipdb; ipdb.set_trace()
-#     for stream in catalog.streams:
-#         stream_metadata = metadata.to_map(stream.metadata)
-#         # stream metadata will have an empty breadcrumb
-#         if metadata.get(stream_metadata, (), "selected"):
-#             selected_streams.append(stream.tap_stream_id)
-
-#     return selected_streams
-
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
-    # selected_stream_ids = get_selected_streams(catalog)
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
 
     # Loop over streams in catalog
@@ -117,15 +98,14 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
             write_schema(stream_id, stream.schema.to_dict(), 'id')
 
             while True:
-                # TODO: use end_date in state or use bookmark? How do they relate
-                # if 'bookmarks' in state:  # Use bookmark as starting point
-                    # startDateTime = arrow.get(state['bookmarks'][stream_id]['last_record'])
-                if 'end_date' in state:  # Start where the previous run left off.
-                    start_datetime = arrow.get(state['end_date'])
-                else:  # This case indicates a first-ever run
-                    start_datetime = arrow.get(config['start_date'])
+                previous_state_end_datetime = state.get('bookmarks', {}).get(stream_id, {}).get('last_record', None)
 
-                # request a month of data from the api
+                if previous_state_end_datetime is not None: # Start where the previous run left off.
+                    start_datetime = arrow.get(previous_state_end_datetime)
+                else:  # This case indicates a first-ever run
+                    start_datetime = arrow.get('2015-01-01')
+
+                # request data from the api in blocks of 30 days
                 end_datetime = start_datetime.shift(days=30)
 
                 # Fetch data from api
@@ -136,28 +116,36 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
                     "endDate": end_datetime.isoformat(),
                 }
 
-                res = request(SATISMETER_URL, params=params,
-                              auth=HTTPBasicAuth(config["api_key"], None),
-                              user_agent=config.get('user_agent'))
+                res_json = request(
+                    SATISMETER_URL, params=params,
+                    auth=HTTPBasicAuth(config["api_key"], None),
+                    user_agent=config.get('user_agent', None)
+                ).json()
 
                 # Output items
-                # bookmark = start_datetime
-                for response in res.json()['responses']:
-                    write_record(stream_id, response)
-                    # bookmark = max([arrow.get(response['created']), bookmark])
+                bookmark = start_datetime
+                with record_counter(endpoint=stream_id) as counter:
+                    for response in res_json['responses']:
+                        write_record(stream_id, response)
+                        counter.increment()
+                        bookmark = max([arrow.get(response['created']), bookmark])
+                
+                    # If no responses were returned and the end_datetime requested is not past the current timestamp,
+                    # it means we can move the bookmark to the end_datetime to request the following period.
+                    # If the end_datetime is past the current timestamp, it means there are still responses that can
+                    # come in; don't update the bookmark, the loop will exit at the end due to the if-break condition
+                    if counter.value == 0 and end_datetime < arrow.utcnow():
+                        bookmark = end_datetime
 
                 # Update and export state
-                state.update({
-                    'start_date': start_datetime.isoformat(),
-                    'end_date': end_datetime.isoformat()
-                })
+                if 'bookmarks' not in state:
+                    state['bookmarks'] = {}
+                state['bookmarks'][stream_id] = {'last_record': bookmark.isoformat()}
 
-                # utils.update_state(state, stream_id, bookmark.datetime)
-                # if 'bookmarks' not in state:
-                #     state['bookmarks'] = {}
-                # state['bookmarks'][stream_id] = {'last_record': bookmark.isoformat()}
                 write_state(state)
 
+                # Stop when we had requested past the current timestamp,
+                # there won't be anything more.
                 if end_datetime > arrow.utcnow():
                     break
 

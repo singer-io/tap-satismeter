@@ -6,6 +6,8 @@ spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
 
 Created using https://github.com/singer-io/singer-tap-template and https://github.com/singer-io/tap-appsflyer/blob/master/tap_appsflyer/
 
+It queries the [Satismeter Export Responses API](https://help.satismeter.com/en/articles/87961-export-responses-api)
+
 ## Instructions
 
 Add the project id and api key for Satismeter in `tap_satismeter/config.json`
