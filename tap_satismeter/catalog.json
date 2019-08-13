@@ -86,6 +86,19 @@
         {
           "breadcrumb": [],
           "metadata": {
+            "table-key-properties": [
+              "month",
+              "nps",
+              "responses",
+              "displays",
+              "dismissed",
+              "pending",
+              "commented",
+              "promoters",
+              "passives",
+              "detractors",
+              "frequency"
+            ],
             "inclusion": "available",
             "schema-name": "response-statistics"
           }
@@ -96,7 +109,7 @@
             "month"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -105,7 +118,7 @@
             "responses"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -114,7 +127,7 @@
             "displays"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -123,7 +136,7 @@
             "dismissed"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -132,7 +145,7 @@
             "pending"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -141,7 +154,7 @@
             "commented"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -150,7 +163,7 @@
             "promoters"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -159,7 +172,7 @@
             "passives"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -168,7 +181,7 @@
             "detractors"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -177,7 +190,7 @@
             "nps"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         },
         {
@@ -186,11 +199,23 @@
             "frequency"
           ],
           "metadata": {
-            "inclusion": "available"
+            "inclusion": "automatic"
           }
         }
       ],
-      "key_properties": []
+      "key_properties": [
+        "month",
+        "nps",
+        "responses",
+        "displays",
+        "dismissed",
+        "pending",
+        "commented",
+        "promoters",
+        "passives",
+        "detractors",
+        "frequency"
+      ]
     },
     {
       "stream": "responses",
@@ -607,7 +632,14 @@
           }
         }
       ],
-      "key_properties": []
+      "key_properties": [
+        "id",
+        "created",
+        "rating",
+        "category",
+        "score",
+        "feedback"
+      ]
     }
   ]
 }

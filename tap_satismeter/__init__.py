@@ -160,7 +160,7 @@ def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
 
         # Start where the previous run left off or it's a first run.
         start_datetime = arrow.get(
-            previous_state_end_datetime or '2019-01-01').floor('month')
+            previous_state_end_datetime or '2015-01-01').floor('month')
 
         # request data from the api per month
         end_datetime = start_datetime.shift(months=1)
@@ -208,6 +208,7 @@ def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
+    selected_stream_ids = ['response-statistics', ]
 
     # Loop over streams in catalog
     for stream in catalog.streams:
