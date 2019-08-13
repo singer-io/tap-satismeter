@@ -10,6 +10,12 @@
         ],
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "month": {
             "type": [
               "null",
@@ -87,6 +93,7 @@
           "breadcrumb": [],
           "metadata": {
             "table-key-properties": [
+              "id",
               "month",
               "nps",
               "responses",
@@ -101,6 +108,15 @@
             ],
             "inclusion": "available",
             "schema-name": "response-statistics"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "id"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
           }
         },
         {
@@ -204,6 +220,7 @@
         }
       ],
       "key_properties": [
+        "id",
         "month",
         "nps",
         "responses",

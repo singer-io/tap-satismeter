@@ -68,7 +68,7 @@ def get_key_properties(schema_name: str) -> List[str]:
     if schema_name == 'responses':
         return ['id', 'created', 'rating', 'category', 'score', 'feedback']
     if schema_name == 'response-statistics':
-        return ['month', 'nps', 'responses', 'displays', 'dismissed', 'pending',
+        return ['id', 'month', 'nps', 'responses', 'displays', 'dismissed', 'pending',
                 'commented', 'promoters', 'passives', 'detractors', 'frequency']
     return []
 
@@ -182,6 +182,7 @@ def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
         # Output items
         record = res_json['data'][0]['attributes']
         record['month'] = start_datetime.isoformat()
+        record['id'] = record['month']
 
         write_record(stream_id, record)
 
