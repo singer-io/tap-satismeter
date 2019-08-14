@@ -67,9 +67,6 @@ def get_key_properties(schema_name: str) -> List[str]:
     """ return for each schema which fields are mandatory included. """
     if schema_name == 'responses':
         return ['id', 'created', 'rating', 'category', 'score', 'feedback']
-    if schema_name == 'response-statistics':
-        return ['id', 'month', 'nps', 'responses', 'displays', 'dismissed', 'pending',
-                'commented', 'promoters', 'passives', 'detractors', 'frequency']
     return []
 
 
@@ -151,65 +148,9 @@ def output_responses(stream_id, config: dict, state: dict) -> dict:
     return state
 
 
-def output_response_statistics(stream_id, config: dict, state: dict) -> dict:
-    """ Query and output the api for aggregated response statistics per month """
-
-    while True:
-        previous_state_end_datetime = state.get(
-            'bookmarks', {}).get(stream_id, {}).get('last_month', None)
-
-        # Start where the previous run left off or it's a first run.
-        start_datetime = arrow.get(
-            previous_state_end_datetime or '2015-01-01').floor('month')
-
-        # request data from the api per month
-        end_datetime = start_datetime.shift(months=1)
-
-        # Fetch data from api
-        params = {
-            "format": "json",
-            "project": config["project_id"],
-            "startDate": start_datetime.isoformat(),
-            "endDate": end_datetime.isoformat(),
-        }
-
-        res_json = request(
-            '/v2/response-statistics', params=params,
-            auth=HTTPBasicAuth(config["api_key"], None),
-            user_agent=config.get('user_agent', None)
-        ).json()
-
-        # Output items
-        record = res_json['data'][0]['attributes']
-        record['month'] = start_datetime.isoformat()
-        record['id'] = record['month']
-
-        write_record(stream_id, record)
-
-        bookmark = end_datetime
-        if start_datetime == arrow.utcnow().floor('month'):
-            bookmark = start_datetime
-
-        # Update and export state
-        if 'bookmarks' not in state:
-            state['bookmarks'] = {}
-        state['bookmarks'][stream_id] = {'last_month': bookmark.isoformat()}
-
-        write_state(state)
-
-        # Stop when we had requested the current month, the next
-        # month won't contain any data.
-        if start_datetime == arrow.utcnow().floor('month'):
-            break
-
-    return state
-
-
-
 def sync(config: dict, state: dict, catalog: Catalog) -> None:
     """ sync performs querying of the api and outputting results. """
     selected_stream_ids = [s.tap_stream_id for s in catalog.streams]
-    selected_stream_ids = ['responses', ]
 
     # Loop over streams in catalog
     for stream in catalog.streams:
@@ -220,8 +161,6 @@ def sync(config: dict, state: dict, catalog: Catalog) -> None:
 
             if stream_id == 'responses':
                 state = output_responses(stream_id, config, state)
-            elif stream_id == 'response-statistics':
-                state = output_response_statistics(stream_id, config, state)
             else:
                 LOGGER.error("No handler for stream_id: %s", stream_id)
 
