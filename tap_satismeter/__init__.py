@@ -181,7 +181,7 @@ def main():
         if args.catalog:
             catalog = args.catalog
         else:
-            catalog = discover()
+            catalog = Catalog.from_dict(discover())
 
         sync(args.config, args.state, catalog)
 
