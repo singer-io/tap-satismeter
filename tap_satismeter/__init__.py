@@ -75,7 +75,7 @@ def discover():
 
     for schema_name, schema in load_schemas():
 
-        meta_data = metadata.get_standard_metadata(schema=schema, schema_name=schema_name,
+        meta_data = metadata.get_standard_metadata(schema=schema,
                                                    key_properties=get_key_properties(schema_name))
 
         # create and add catalog entry
