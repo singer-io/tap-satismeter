@@ -78,3 +78,7 @@ Run the tap:
 ```bash
 python __init__.py -c ../config.json --catalog catalog.json > output.json
 ```
+
+---
+
+Copyright &copy; 2019 Stitch
